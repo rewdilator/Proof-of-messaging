@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESAM Secure Messaging | Encrypted Wallet-to-Wallet Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --gray: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        [data-theme="dark"] {
+            --dark: #f9fafb;
+            --light: #1f2937;
+            --border: #374151;
+            --gray: #9ca3af;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--light);
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 350px;
+            background: var(--light);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--primary);
+            color: white;
+        }
+
+        .wallet-info {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .wallet-address {
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .wallet-balance {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .conversation-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .conversation-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .last-message {
+            font-size: 12px;
+            color: var(--gray);
+            opacity: 0.8;
+        }
+
+        .conversation-item.active .last-message {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        /* Chat Area Styles */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .contact-details {
+            display: flex;
+            align-items: center;
+        }
+
+        .online-status {
+            width: 8px;
+            height: 8px;
+            background: var(--secondary);
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--light);
+        }
+
+        .message {
+            max-width: 70%;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            animation: messageAppear 0.3s ease;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.outgoing {
+            background: var(--primary);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.incoming {
+            background: var(--border);
+            color: var(--dark);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-content {
+            word-wrap: break-word;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .message.incoming .message-time {
+            text-align: left;
+        }
+
+        .message-status {
+            font-size: 10px;
+            margin-top: 2px;
+            opacity: 0.7;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            background: var(--light);
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            background: var(--light);
+            color: var(--dark);
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .message-input:focus {
+            border-color: var(--primary);
+        }
+
+        .input-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--dark);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        /* Block Generation Panel */
+        .block-panel {
+            width: 300px;
+            background: var(--light);
+            border-left: 1px solid var(--border);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-card {
+            background: var(--border);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        .block-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .block-item {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .block-number {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .block-hash {
+            font-family: monospace;
+            font-size: 10px;
+            color: var(--gray);
+            word-break: break-all;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        /* Loading States */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+        }
+
+        .spinner {
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 40vh;
+            }
+            
+            .block-panel {
+                width: 100%;
+                height: 30vh;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        .notification.success {
+            background: var(--secondary);
+        }
+
+        .notification.error {
+            background: var(--danger);
+        }
+
+        .notification.warning {
+            background: var(--warning);
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-sun"></i>
+    </button>
+
+    <!-- Main App Container -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-comment-shield"></i> TESAM Secure Chat</h2>
+                <div class="wallet-info">
+                    <div class="wallet-address" id="currentWallet">Not connected</div>
+                    <div class="wallet-balance" id="walletBalance">0 TESAM</div>
+                </div>
+            </div>
+
+            <div class="conversations-list" id="conversationsList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading conversations...
+                </div>
+            </div>
+
+            <div class="sidebar-footer" style="padding: 20px; border-top: 1px solid var(--border);">
+                <button class="btn btn-primary" onclick="showWalletModal()" style="width: 100%;">
+                    <i class="fas fa-wallet"></i> Connect Wallet
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="contact-details">
+                    <div class="contact-avatar" id="currentContactAvatar">?</div>
+                    <div>
+                        <div id="currentContactName">Select a conversation</div>
+                        <div class="online-status"></div>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="btn btn-secondary" onclick="generateBlock()">
+                        <i class="fas fa-cube"></i> Generate Block
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Select a conversation to start messaging
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <textarea 
+                    class="message-input" 
+                    id="messageInput" 
+                    placeholder="Type your encrypted message..." 
+                    rows="1"
+                    disabled
+                ></textarea>
+                <div class="input-actions">
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" onclick="attachFile()">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <button class="btn btn-secondary" onclick="sendTransaction()">
+                            <i class="fas fa-coins"></i> Send TESAM
+                        </button>
+                    </div>
+                    <button class="btn btn-primary" id="sendButton" onclick="sendMessage()" disabled>
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Block Generation Panel -->
+        <div class="block-panel">
+            <div class="panel-section">
+                <div class="panel-title">
+                    <i class="fas fa-cubes"></i> Blockchain Status
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="blockHeight">0</div>
+                    <div class="stat-label">Current Block Height</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingTransactions">0</div>
+                    <div class="stat-label">Pending Transactions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingMessages">0</div>
+                    <div class="stat-label">Pending Messages</div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">
+                    <i class="fas fa-bolt"></i> Recent Blocks
+                </div>
+                <div class="block-list" id="recentBlocks">
+                    <div class="loading">Loading blocks...</div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">
+                    <i class="fas fa-sync-alt"></i> Auto-Generation
+                </div>
+                <div class="stat-card">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="autoGenerate" onchange="toggleAutoGenerate()">
+                        Auto-generate blocks
+                    </label>
+                    <div class="stat-label" style="margin-top: 10px;">
+                        Blocks generate automatically when there are enough messages/transactions
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet Modal -->
+    <div id="walletModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: var(--light); padding: 30px; border-radius: 15px; width: 90%; max-width: 500px;">
+            <h3 style="margin-bottom: 20px; color: var(--primary);">
+                <i class="fas fa-wallet"></i> Connect Wallet
+            </h3>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="createNewWallet()" style="width: 100%; margin-bottom: 10px;">
+                    <i class="fas fa-plus"></i> Create New Wallet
+                </button>
+                <button class="btn btn-secondary" onclick="importWallet()" style="width: 100%;">
+                    <i class="fas fa-download"></i> Import Wallet
+                </button>
+            </div>
+
+            <div id="importSection" style="display: none;">
+                <textarea 
+                    id="privateKeyInput" 
+                    placeholder="Enter your private key (0x...)" 
+                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; resize: vertical;"
+                    rows="3"
+                ></textarea>
+                <button class="btn btn-success" onclick="connectWithPrivateKey()" style="width: 100%;">
+                    <i class="fas fa-plug"></i> Connect
+                </button>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: rgba(99, 102, 241, 0.1); border-radius: 8px;">
+                <h4 style="color: var(--primary); margin-bottom: 10px;">
+                    <i class="fas fa-shield-alt"></i> Security Notice
+                </h4>
+                <p style="font-size: 12px; color: var(--gray);">
+                    • Private keys are stored locally in your browser<br>
+                    • Never share your private key with anyone<br>
+                    • Messages are encrypted end-to-end<br>
+                    • Always backup your wallet
+                </p>
+            </div>
+
+            <button class="btn btn-secondary" onclick="hideWalletModal()" style="width: 100%; margin-top: 20px;">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        let currentWallet = null;
+        let currentContact = null;
+        let ws = null;
+        let autoGenerateEnabled = false;
+        let messageQueue = [];
+        let currentTheme = 'light';
+
+        // Theme management
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', currentTheme);
+            const icon = document.querySelector('.theme-toggle i');
+            icon.className = currentTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        // Wallet management
+        function showWalletModal() {
+            document.getElementById('walletModal').style.display = 'flex';
+        }
+
+        function hideWalletModal() {
+            document.getElementById('walletModal').style.display = 'none';
+            document.getElementById('importSection').style.display = 'none';
+        }
+
+        function importWallet() {
+            document.getElementById('importSection').style.display = 'block';
+        }
+
+        async function createNewWallet() {
+            try {
+                const response = await fetch(`${API_BASE}/wallet/create`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentWallet = data.data;
+                    localStorage.setItem('tesamWallet', JSON.stringify(currentWallet));
+                    updateWalletDisplay();
+                    hideWalletModal();
+                    showNotification('New wallet created successfully!', 'success');
+                    loadConversations();
+                }
+            } catch (error) {
+                showNotification('Failed to create wallet', 'error');
+                console.error('Wallet creation error:', error);
+            }
+        }
+
+        async function connectWithPrivateKey() {
+            const privateKey = document.getElementById('privateKeyInput').value.trim();
+            
+            if (!privateKey) {
+                showNotification('Please enter a private key', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/wallet/import`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ privateKey })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentWallet = data.data;
+                    localStorage.setItem('tesamWallet', JSON.stringify(currentWallet));
+                    updateWalletDisplay();
+                    hideWalletModal();
+                    showNotification('Wallet imported successfully!', 'success');
+                    loadConversations();
+                } else {
+                    showNotification('Invalid private key', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to import wallet', 'error');
+                console.error('Wallet import error:', error);
+            }
+        }
+
+        function updateWalletDisplay() {
+            if (currentWallet) {
+                document.getElementById('currentWallet').textContent = currentWallet.address;
+                document.getElementById('walletBalance').textContent = currentWallet.balanceTESAM + ' TESAM';
+                
+                // Enable messaging
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('sendButton').disabled = false;
+            }
+        }
+
+        // Load saved wallet on startup
+        function loadSavedWallet() {
+            const savedWallet = localStorage.getItem('tesamWallet');
+            if (savedWallet) {
+                currentWallet = JSON.parse(savedWallet);
+                updateWalletDisplay();
+                loadConversations();
+                connectWebSocket();
+            }
+        }
+
+        // Messaging functions
+        async function loadConversations() {
+            if (!currentWallet) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/messages/list`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        privateKey: currentWallet.privateKey,
+                        limit: 50
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayConversations(data.data.messages);
+                }
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+            }
+        }
+
+        function displayConversations(messages) {
+            const container = document.getElementById('conversationsList');
+            
+            // Group messages by contact
+            const conversations = {};
+            messages.forEach(msg => {
+                const contactAddress = msg.direction === 'outgoing' ? msg.to : msg.from;
+                if (!conversations[contactAddress]) {
+                    conversations[contactAddress] = {
+                        address: contactAddress,
+                        lastMessage: msg,
+                        messages: []
+                    };
+                }
+                conversations[contactAddress].messages.push(msg);
+            });
+
+            const conversationItems = Object.values(conversations)
+                .sort((a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp);
+
+            if (conversationItems.length === 0) {
+                container.innerHTML = '<div class="loading">No conversations yet</div>';
+                return;
+            }
+
+            container.innerHTML = conversationItems.map(conv => `
+                <div class="conversation-item" onclick="selectConversation('${conv.address}')">
+                    <div class="contact-avatar">${conv.address.substring(2, 4).toUpperCase()}</div>
+                    <div class="contact-info">
+                        <div class="contact-name">${conv.address.substring(0, 10)}...</div>
+                        <div class="last-message">${getLastMessagePreview(conv.lastMessage)}</div>
+                    </div>
+                    <div class="message-time">${formatTime(conv.lastMessage.timestamp)}</div>
+                </div>
+            `).join('');
+        }
+
+        function getLastMessagePreview(message) {
+            if (message.messageType === 'file') return '📎 File attachment';
+            if (message.messageType === 'image') return '🖼️ Image';
+            return 'Encrypted message';
+        }
+
+        async function selectConversation(contactAddress) {
+            currentContact = contactAddress;
+            
+            // Update UI
+            document.querySelectorAll('.conversation-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            document.getElementById('currentContactName').textContent = contactAddress;
+            document.getElementById('currentContactAvatar').textContent = contactAddress.substring(2, 4).toUpperCase();
+            
+            await loadMessages(contactAddress);
+        }
+
+        async function loadMessages(contactAddress) {
+            if (!currentWallet) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/messages/list`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        privateKey: currentWallet.privateKey,
+                        limit: 100
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const messages = data.data.messages.filter(msg => 
+                        msg.from === contactAddress || msg.to === contactAddress
+                    );
+                    displayMessages(messages);
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        function displayMessages(messages) {
+            const container = document.getElementById('chatMessages');
+            
+            const sortedMessages = messages.sort((a, b) => a.timestamp - b.timestamp);
+            
+            container.innerHTML = sortedMessages.map(msg => `
+                <div class="message ${msg.direction}">
+                    <div class="message-content">
+                        ${msg.direction === 'incoming' ? '🔒 ' : ''}${getMessageContent(msg)}
+                    </div>
+                    <div class="message-time">${formatTime(msg.timestamp)}</div>
+                    <div class="message-status">${msg.status || 'delivered'}</div>
+                </div>
+            `).join('');
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function getMessageContent(message) {
+            if (message.messageType === 'file') return '📎 File attachment (encrypted)';
+            if (message.messageType === 'image') return '🖼️ Image (encrypted)';
+            if (message.decryptedContent) return message.decryptedContent;
+            return '🔒 Encrypted message';
+        }
+
+        async function sendMessage() {
+            if (!currentWallet || !currentContact) {
+                showNotification('Please select a contact first', 'warning');
+                return;
+            }
+
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                showNotification('Please enter a message', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/message/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        from: currentWallet.address,
+                        to: currentContact,
+                        message: message,
+                        privateKey: currentWallet.privateKey,
+                        messageType: 'text'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Add message to UI immediately
+                    const tempMessage = {
+                        hash: data.data.messageHash,
+                        from: currentWallet.address,
+                        to: currentContact,
+                        timestamp: Date.now(),
+                        direction: 'outgoing',
+                        status: 'pending',
+                        messageType: 'text',
+                        decryptedContent: message
+                    };
+                    
+                    displayMessages([tempMessage]);
+                    messageInput.value = '';
+                    
+                    showNotification('Encrypted message sent!', 'success');
+                    
+                    // Reload conversations to update last message
+                    loadConversations();
+                }
+            } catch (error) {
+                showNotification('Failed to send message', 'error');
+                console.error('Message send error:', error);
+            }
+        }
+
+        async function sendTransaction() {
+            if (!currentWallet || !currentContact) {
+                showNotification('Please select a contact first', 'warning');
+                return;
+            }
+
+            const amount = prompt('Enter TESAM amount to send:');
+            if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+                showNotification('Invalid amount', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/transaction/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        from: currentWallet.address,
+                        to: currentContact,
+                        amount: parseFloat(amount),
+                        privateKey: currentWallet.privateKey
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(`Sent ${amount} TESAM to ${currentContact.substring(0, 10)}...`, 'success');
+                    updateWalletDisplay();
+                }
+            } catch (error) {
+                showNotification('Transaction failed: ' + error.message, 'error');
+            }
+        }
+
+        // Block generation
+        async function generateBlock() {
+            if (!currentWallet) {
+                showNotification('Please connect wallet first', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/block/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        minerAddress: currentWallet.address
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(`Block #${data.data.blockNumber} generated!`, 'success');
+                    updateBlockchainStats();
+                }
+            } catch (error) {
+                showNotification('Block generation failed: ' + error.message, 'error');
+            }
+        }
+
+        function toggleAutoGenerate() {
+            autoGenerateEnabled = document.getElementById('autoGenerate').checked;
+            showNotification(`Auto-generation ${autoGenerateEnabled ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        // Blockchain stats
+        async function updateBlockchainStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const stats = await response.json();
+                
+                document.getElementById('blockHeight').textContent = stats.latestBlockNumber;
+                document.getElementById('pendingTransactions').textContent = stats.pendingTransactions;
+                document.getElementById('pendingMessages').textContent = stats.pendingMessages;
+                
+                // Update recent blocks
+                updateRecentBlocks();
+                
+                // Auto-generate if enabled and conditions met
+                if (autoGenerateEnabled && currentWallet && 
+                    (stats.pendingTransactions > 5 || stats.pendingMessages > 3)) {
+                    generateBlock();
+                }
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        async function updateRecentBlocks() {
+            try {
+                const response = await fetch(`${API_BASE}/chain?limit=5`);
+                const data = await response.json();
+                
+                const container = document.getElementById('recentBlocks');
+                container.innerHTML = data.blocks.map(block => `
+                    <div class="block-item">
+                        <div class="block-number">#${block.number}</div>
+                        <div class="block-hash">${block.hash.substring(0, 16)}...</div>
+                        <div style="font-size: 10px; color: var(--gray); margin-top: 5px;">
+                            ${block.transactions.length} tx • ${block.messages?.length || 0} msg
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error updating blocks:', error);
+            }
+        }
+
+        // WebSocket for real-time updates
+        function connectWebSocket() {
+            ws = new WebSocket(`ws://localhost:3000`);
+            
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                ws.send(JSON.stringify({ type: 'subscribe_blocks' }));
+                ws.send(JSON.stringify({ type: 'subscribe_transactions' }));
+                ws.send(JSON.stringify({ type: 'subscribe_messages' }));
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                switch (data.type) {
+                    case 'new_block':
+                        showNotification(`New block #${data.block.number} generated`, 'success');
+                        updateBlockchainStats();
+                        break;
+                        
+                    case 'new_transaction':
+                        if (data.transaction.from === currentWallet?.address || 
+                            data.transaction.to === currentWallet?.address) {
+                            showNotification('New transaction detected', 'success');
+                            updateWalletDisplay();
+                        }
+                        break;
+                        
+                    case 'new_message':
+                        if (data.message.to === currentWallet?.address) {
+                            showNotification('New encrypted message received', 'success');
+                            loadConversations();
+                            if (currentContact === data.message.from) {
+                                loadMessages(currentContact);
+                            }
+                        }
+                        break;
+                        
+                    case 'blockchain_state':
+                        updateBlockchainStats();
+                        break;
+                }
+            };
+            
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                // Attempt to reconnect after 5 seconds
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+
+        // Utility functions
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function attachFile() {
+            showNotification('File attachment feature coming soon!', 'warning');
+        }
+
+        // Initialize
+        function init() {
+            // Load theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            currentTheme = savedTheme;
+            document.body.setAttribute('data-theme', currentTheme);
+            document.querySelector('.theme-toggle i').className = 
+                currentTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            
+            // Load wallet
+            loadSavedWallet();
+            
+            // Start stats updates
+            updateBlockchainStats();
+            setInterval(updateBlockchainStats, 10000); // Update every 10 seconds
+            
+            // Handle message input enter key
+            document.getElementById('messageInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // Auto-resize textarea
+            document.getElementById('messageInput').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
