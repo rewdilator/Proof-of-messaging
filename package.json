@@ -1,0 +1,22 @@
+{
+  "name": "tesam-blockchain",
+  "version": "3.0.0",
+  "description": "TESAM Secure Blockchain with Encrypted Messaging",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "cli": "node advanced-chain.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": ["blockchain", "cryptocurrency", "tesam", "secure", "messaging", "encrypted"],
+  "author": "Tesam Foundation",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tesam Blockchain Explorer | Secure Blockchain Explorer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="light">
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <a href="#" class="logo" onclick="showTab('home'); return false;">
+                <i class="fas fa-link"></i>
+                <span>Tesam Explorer</span>
+            </a>
+            
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="nav-links" id="navLinks">
+                <a href="#" onclick="showTab('blocks'); return false;"><i class="fas fa-cube"></i> Blocks</a>
+                <a href="#" onclick="showTab('transactions'); return false;"><i class="fas fa-exchange-alt"></i> Transactions</a>
+                <a href="#" onclick="showTab('tokens'); return false;"><i class="fas fa-coins"></i> Tokens</a>
+                <a href="/wallet" target="_blank"><i class="fas fa-wallet"></i> Wallet</a>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+                    <i class="fas fa-sun"></i>
+                </button>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" id="globalSearch" placeholder="Search by Address / Txn Hash / Block / Token">
+                <button onclick="performSearch()"><i class="fas fa-search"></i></button>
+                <div class="search-results" id="searchResults"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Home Tab (Default) -->
+        <div id="home" class="tab-content active">
+            <!-- Price Card -->
+            <div class="price-card">
+                <div class="price-main" id="tesamPrice">$0.00</div>
+                <div class="price-change" id="priceChange">Loading...</div>
+                <div class="market-stats">
+                    <div>
+                        <div>Market Cap</div>
+                        <div id="marketCap">$0</div>
+                    </div>
+                    <div>
+                        <div>24h Volume</div>
+                        <div id="volume24h">$0</div>
+                    </div>
+                    <div>
+                        <div>Circulating Supply</div>
+                        <div id="circulatingSupply">200,000,000 TESAM</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-overview">
+                <div class="stat-card" onclick="showTab('blocks'); return false;">
+                    <h3><i class="fas fa-cube"></i> Latest Block</h3>
+                    <div class="stat-value" id="latestBlock">0</div>
+                    <div class="stat-change" id="blockTime">Avg: 0s</div>
+                </div>
+                <div class="stat-card" onclick="showTab('transactions'); return false;">
+                    <h3><i class="fas fa-exchange-alt"></i> Transactions</h3>
+                    <div class="stat-value" id="totalTransactions">0</div>
+                    <div class="stat-change" id="txsPerSecond">0 TPS</div>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-gas-pump"></i> Gas Price</h3>
+                    <div class="stat-value" id="gasPrice">0 Gwei</div>
+                    <div class="stat-change" id="gasTrend">Stable</div>
+                </div>
+                <div class="stat-card">
+                    <h3><i class="fas fa-shield-alt"></i> Network Difficulty</h3>
+                    <div class="stat-value" id="networkDifficulty">0</div>
+                    <div class="stat-change positive" id="difficultyChange">+0%</div>
+                </div>
+            </div>
+
+            <!-- Blocks & Transactions -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-cubes"></i> Latest Blocks
+                    </div>
+                    <a href="#" onclick="showTab('blocks'); return false;">
+                        <span class="desktop-only">View All Blocks</span>
+                        <span class="mobile-only">View All</span>                     
+                    </a>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Block</th>
+                                <th>Age</th>
+                                <th>Txns</th>
+                                <th class="mobile-hidden">Miner</th>
+                                <th>Gas Used</th>
+                                <th>Reward</th>
+                            </tr>
+                        </thead>
+                        <tbody id="latestBlocksTable">
+                            <tr>
+                                <td colspan="6" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading blocks...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-exchange-alt"></i> Latest Transactions
+                    </div>
+                    <a href="#" onclick="showTab('transactions'); return false;">
+                        <span class="desktop-only">View All Transactions</span>
+                        <span class="mobile-only">View All</span>
+                    </a>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Transaction Hash</th>
+                                <th>Block</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Value</th>
+                                <th class="mobile-hidden">Fee</th>
+                            </tr>
+                        </thead>
+                        <tbody id="latestTransactionsTable">
+                            <tr>
+                                <td colspan="6" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading transactions...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blocks Tab -->
+        <div id="blocks" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-cubes"></i> All Blocks
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" onclick="loadAllBlocks()">
+                            <i class="fas fa-sync-alt"></i> <span class="desktop-only">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Block</th>
+                                <th>Age</th>
+                                <th>Txns</th>
+                                <th class="mobile-hidden">Miner</th>
+                                <th class="mobile-hidden">Gas Used</th>
+                                <th class="mobile-hidden">Gas Limit</th>
+                                <th>Difficulty</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allBlocksTable">
+                            <tr>
+                                <td colspan="7" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading blocks...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="blocksPagination">
+                    <!-- Pagination will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Tab -->
+        <div id="transactions" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-exchange-alt"></i> All Transactions
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" onclick="loadAllTransactions()">
+                            <i class="fas fa-sync-alt"></i> <span class="desktop-only">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Transaction Hash</th>
+                                <th>Block</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Value</th>
+                                <th class="mobile-hidden">Fee</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allTransactionsTable">
+                            <tr>
+                                <td colspan="7" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading transactions...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="transactionsPagination">
+                    <!-- Pagination will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tokens Tab -->
+        <div id="tokens" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-coins"></i> Tokens
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" onclick="loadTokens()">
+                            <i class="fas fa-sync-alt"></i> <span class="desktop-only">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="token-grid" id="tokensGrid">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading tokens...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Block Detail View -->
+        <div id="blockDetail" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-cube"></i> Block Details
+                    </div>
+                    <button class="btn btn-primary" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
+                <div id="blockDetailContent">
+                    <!-- Block details will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Detail View -->
+        <div id="transactionDetail" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-exchange-alt"></i> Transaction Details
+                    </div>
+                    <button class="btn btn-primary" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
+                <div id="transactionDetailContent">
+                    <!-- Transaction details will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Address Detail View -->
+        <div id="addressDetail" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-wallet"></i> Address Details
+                    </div>
+                    <button class="btn btn-primary" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
+                <div id="addressDetailContent">
+                    <!-- Address details will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Token Detail View -->
+        <div id="tokenDetail" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-coins"></i> Token Details
+                    </div>
+                    <button class="btn btn-primary" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
+                <div id="tokenDetailContent">
+                    <!-- Token details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        const COINGECKO_API = 'https://api.coingecko.com/api/v3/simple/price?ids=vechain&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true';
+        
+        let ws;
+        let currentTheme = 'light';
+        let currentView = 'home';
+        let viewHistory = [];
+        let priceUpdateInterval;
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('mobile-open');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.nav-container')) {
+                document.getElementById('navLinks').classList.remove('mobile-open');
+            }
+        });
+
+        // Theme Management
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', currentTheme);
+            const icon = document.querySelector('.theme-toggle i');
+            icon.className = currentTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        // Price data from CoinGecko with better error handling
+        async function fetchPriceData() {
+            try {
+                const response = await fetch(COINGECKO_API);
+                if (!response.ok) throw new Error('Failed to fetch price data');
+                
+                const data = await response.json();
+                const vetData = data.vechain;
+                
+                if (vetData) {
+                    const price = vetData.usd;
+                    const change24h = vetData.usd_24h_change;
+                    const marketCap = vetData.usd_market_cap;
+                    const volume24h = vetData.usd_24h_vol;
+                    
+                    // Update price display
+                    document.getElementById('tesamPrice').textContent = `$${price.toFixed(4)}`;
+                    
+                    const priceChangeElement = document.getElementById('priceChange');
+                    priceChangeElement.textContent = `${change24h >= 0 ? '+' : ''}${change24h.toFixed(2)}% (24h)`;
+                    priceChangeElement.className = `price-change ${change24h >= 0 ? 'positive' : 'negative'}`;
+                    
+                    // Update market stats
+                    document.getElementById('marketCap').textContent = `$${(marketCap / 1000000).toFixed(0)}M`;
+                    document.getElementById('volume24h').textContent = `$${(volume24h / 1000000).toFixed(0)}M`;
+                }
+            } catch (error) {
+                console.error('Error fetching price data:', error);
+                // Use API fallback
+                try {
+                    const response = await fetch(`${API_BASE}/market`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        document.getElementById('tesamPrice').textContent = `$${data.price.toFixed(4)}`;
+                        document.getElementById('priceChange').textContent = `${data.priceChange24h >= 0 ? '+' : ''}${data.priceChange24h.toFixed(2)}% (24h)`;
+                        document.getElementById('priceChange').className = `price-change ${data.priceChange24h >= 0 ? 'positive' : 'negative'}`;
+                        document.getElementById('marketCap').textContent = `$${(data.marketCap / 1000000).toFixed(0)}M`;
+                        document.getElementById('volume24h').textContent = `$${(data.volume24h / 1000000).toFixed(0)}M`;
+                    } else {
+                        throw new Error('API fallback failed');
+                    }
+                } catch (fallbackError) {
+                    console.error('Fallback price data failed:', fallbackError);
+                    // Final fallback to default data
+                    document.getElementById('tesamPrice').textContent = '$1.25';
+                    document.getElementById('priceChange').textContent = '+5.67% (24h)';
+                    document.getElementById('priceChange').className = 'price-change positive';
+                    document.getElementById('marketCap').textContent = '$250M';
+                    document.getElementById('volume24h').textContent = '$12.5M';
+                }
+            }
+        }
+
+        // URL Routing
+        function updateURL(path = '') {
+            const basePath = window.location.pathname;
+            const newURL = path ? `${basePath}#${path}` : basePath;
+            window.history.pushState({ path: path }, '', newURL);
+        }
+
+        function handlePopState() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                navigateToHash(hash);
+            } else {
+                showTab('home');
+            }
+        }
+
+        function navigateToHash(hash) {
+            const parts = hash.split('/');
+            const type = parts[0];
+            const identifier = parts[1];
+
+            switch(type) {
+                case 'block':
+                    if (identifier && !isNaN(identifier)) {
+                        viewBlock(parseInt(identifier));
+                    } else {
+                        showTab('blocks');
+                    }
+                    break;
+                case 'tx':
+                case 'transaction':
+                    if (identifier) {
+                        viewTransaction(identifier);
+                    } else {
+                        showTab('transactions');
+                    }
+                    break;
+                case 'address':
+                    if (identifier) {
+                        viewAddress(identifier);
+                    } else {
+                        showTab('home');
+                    }
+                    break;
+                case 'token':
+                    if (identifier) {
+                        viewToken(identifier);
+                    } else {
+                        showTab('tokens');
+                    }
+                    break;
+                case 'blocks':
+                case 'transactions':
+                case 'tokens':
+                case 'home':
+                    showTab(type);
+                    break;
+                default:
+                    showTab('home');
+            }
+        }
+
+        // Copy to clipboard function
+        function copyToClipboard(text, element = null) {
+            navigator.clipboard.writeText(text).then(() => {
+                if (element) {
+                    const originalText = element.textContent;
+                    element.textContent = 'Copied!';
+                    element.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        element.textContent = originalText;
+                        element.classList.remove('copied');
+                    }, 2000);
+                }
+                showNotification('Copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showNotification('Failed to copy', 'error');
+            });
+        }
+
+        // Make elements copyable (only on detail pages)
+        function makeCopyable() {
+            document.querySelectorAll('.hash.copyable, .address.copyable').forEach(element => {
+                element.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    copyToClipboard(this.textContent, this);
+                });
+            });
+        }
+
+        // Navigation
+        function goBack() {
+            if (viewHistory.length > 1) {
+                // Remove current view from history
+                viewHistory.pop();
+                
+                // Get the previous view from history
+                const previousView = viewHistory[viewHistory.length - 1];
+                
+                if (previousView) {
+                    // Navigate to previous view
+                    if (previousView.identifier) {
+                        if (previousView.type === 'block') {
+                            viewBlock(previousView.identifier);
+                        } else if (previousView.type === 'tx') {
+                            viewTransaction(previousView.identifier);
+                        } else if (previousView.type === 'address') {
+                            viewAddress(previousView.identifier);
+                        } else if (previousView.type === 'token') {
+                            viewToken(previousView.identifier);
+                        }
+                    } else {
+                        showTab(previousView.type);
+                    }
+                } else {
+                    // No previous view, go to home
+                    showTab('home');
+                }
+            } else {
+                // No history, go to home
+                showTab('home');
+            }
+        }
+
+        function navigateToView(type, identifier = null) {
+            let path = type;
+            if (identifier) {
+                path += '/' + identifier;
+            }
+            updateURL(path);
+            
+            // Add to history (limit to 50 entries)
+            viewHistory.push({ type: type, identifier: identifier });
+            if (viewHistory.length > 50) {
+                viewHistory = viewHistory.slice(-50);
+            }
+        }
+
+        // Tab Management
+        function showTab(tabName) {
+            // Close mobile menu
+            document.getElementById('navLinks').classList.remove('mobile-open');
+            
+            // Update navigation
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Activate current tab link
+            const activeLink = document.querySelector(`.nav-links a[onclick*="${tabName}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+            
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            const targetTab = document.getElementById(tabName);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            // Update URL for main tabs only (not detail views)
+            if (!['blockDetail', 'transactionDetail', 'addressDetail', 'tokenDetail'].includes(tabName)) {
+                navigateToView(tabName);
+                currentView = tabName;
+            }
+
+            // Load tab data
+            switch(tabName) {
+                case 'home':
+                    loadHomeData();
+                    break;
+                case 'blocks':
+                    loadAllBlocks();
+                    break;
+                case 'transactions':
+                    loadAllTransactions();
+                    break;
+                case 'tokens':
+                    loadTokens();
+                    break;
+            }
+        }
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                warning: 'fas fa-exclamation-triangle',
+                info: 'fas fa-info-circle'
+            };
+            
+            notification.innerHTML = `
+                <i class="${icons[type] || icons.info}"></i>
+                <span>${message}</span>
+            `;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Search Functionality
+        let searchTimeout;
+        document.getElementById('globalSearch').addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (e.target.value.length >= 2) {
+                    performSearch(e.target.value);
+                } else {
+                    document.getElementById('searchResults').classList.remove('show');
+                }
+            }, 500);
+        });
+
+        async function performSearch(query = null) {
+            const searchInput = document.getElementById('globalSearch');
+            const searchTerm = query || searchInput.value.trim();
+            
+            if (!searchTerm) {
+                document.getElementById('searchResults').classList.remove('show');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/search/${encodeURIComponent(searchTerm)}`);
+                if (!response.ok) throw new Error('Search failed');
+                
+                const results = await response.json();
+                displaySearchResults(results, searchTerm);
+            } catch (error) {
+                console.error('Search error:', error);
+                const resultsContainer = document.getElementById('searchResults');
+                resultsContainer.innerHTML = `
+                    <div class="search-item">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <div>Search failed</div>
+                            <small>Please try again</small>
+                        </div>
+                    </div>
+                `;
+                resultsContainer.classList.add('show');
+            }
+        }
+
+        function displaySearchResults(results, searchTerm) {
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '';
+            
+            let hasResults = false;
+
+            // Blocks
+            if (results.blocks && results.blocks.length > 0) {
+                results.blocks.slice(0, 3).forEach(block => {
+                    const item = document.createElement('div');
+                    item.className = 'search-item';
+                    item.innerHTML = `
+                        <i class="fas fa-cube"></i>
+                        <div>
+                            <div class="search-item-type">Block</div>
+                            <div>#${block.index}</div>
+                            <small>${block.hash.substring(0, 20)}...</small>
+                        </div>
+                    `;
+                    item.onclick = () => {
+                        viewBlock(block.index);
+                        resultsContainer.classList.remove('show');
+                        document.getElementById('globalSearch').value = '';
+                    };
+                    resultsContainer.appendChild(item);
+                    hasResults = true;
+                });
+            }
+
+            // Transactions
+            if (results.transactions && results.transactions.length > 0) {
+                results.transactions.slice(0, 3).forEach(tx => {
+                    const item = document.createElement('div');
+                    item.className = 'search-item';
+                    item.innerHTML = `
+                        <i class="fas fa-exchange-alt"></i>
+                        <div>
+                            <div class="search-item-type">Transaction</div>
+                            <div>${tx.hash.substring(0, 20)}...</div>
+                            <small>${parseInt(tx.amount) / 1e18} TESAM</small>
+                        </div>
+                    `;
+                    item.onclick = () => {
+                        viewTransaction(tx.hash);
+                        resultsContainer.classList.remove('show');
+                        document.getElementById('globalSearch').value = '';
+                    };
+                    resultsContainer.appendChild(item);
+                    hasResults = true;
+                });
+            }
+
+            // Addresses
+            if (results.addresses && results.addresses.length > 0) {
+                results.addresses.slice(0, 3).forEach(address => {
+                    const item = document.createElement('div');
+                    item.className = 'search-item';
+                    item.innerHTML = `
+                        <i class="fas fa-wallet"></i>
+                        <div>
+                            <div class="search-item-type">Address</div>
+                            <div>${address.substring(0, 10)}...</div>
+                            <small>View balance and transactions</small>
+                        </div>
+                    `;
+                    item.onclick = () => {
+                        viewAddress(address);
+                        resultsContainer.classList.remove('show');
+                        document.getElementById('globalSearch').value = '';
+                    };
+                    resultsContainer.appendChild(item);
+                    hasResults = true;
+                });
+            }
+
+            if (!hasResults) {
+                const item = document.createElement('div');
+                item.className = 'search-item';
+                item.innerHTML = `
+                    <i class="fas fa-search"></i>
+                    <div>
+                        <div>No results found</div>
+                        <small>Try a different search term</small>
+                    </div>
+                `;
+                resultsContainer.appendChild(item);
+            }
+
+            resultsContainer.classList.add('show');
+        }
+
+        // Data Loading Functions
+        async function loadHomeData() {
+            try {
+                const statsResponse = await fetch(`${API_BASE}/stats`);
+                if (!statsResponse.ok) throw new Error('Failed to fetch stats');
+
+                const stats = await statsResponse.json();
+
+                // Update stats with safe property access
+                document.getElementById('latestBlock').textContent = (stats.totalBlocks - 1) || 0;
+                document.getElementById('totalTransactions').textContent = (stats.totalTransactions || 0).toLocaleString();
+                document.getElementById('gasPrice').textContent = `${stats.gasPrice || 0} Gwei`;
+                document.getElementById('networkDifficulty').textContent = stats.networkDifficulty || 0;
+                document.getElementById('blockTime').textContent = `Avg: ${Math.round((stats.averageBlockTime || 0) / 1000)}s`;
+                document.getElementById('txsPerSecond').textContent = `${Math.round((stats.totalTransactions || 0) / Math.max((stats.totalBlocks || 1) * 15, 1))} TPS`;
+
+                // Load latest blocks and transactions
+                loadLatestBlocks();
+                loadLatestTransactions();
+
+            } catch (error) {
+                console.error('Error loading home data:', error);
+                showNotification('Failed to load data', 'error');
+            }
+        }
+
+        async function loadLatestBlocks() {
+            try {
+                const response = await fetch(`${API_BASE}/chain?limit=10`);
+                if (!response.ok) throw new Error('Failed to fetch blocks');
+                
+                const data = await response.json();
+                const tbody = document.getElementById('latestBlocksTable');
+                tbody.innerHTML = '';
+
+                if (!data.blocks || data.blocks.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--gray);">No blocks found</td></tr>';
+                    return;
+                }
+
+                data.blocks.forEach(block => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <a href="#" onclick="viewBlock(${block.index}); return false;" class="hash">
+                                ${block.index}
+                            </a>
+                        </td>
+                        <td>${formatTime(block.timestamp)}</td>
+                        <td><strong>${block.transactions ? block.transactions.length : 0}</strong></td>
+                        <td class="mobile-hidden">
+                            <a href="#" onclick="viewAddress('${block.miner}'); return false;" class="address">
+                                ${(block.miner || '').substring(0, 10)}...
+                            </a>
+                        </td>
+                        <td>${(block.gasUsed || 0).toLocaleString()}</td>
+                        <td><strong>${parseInt(block.blockReward || 0) / 1e18} TESAM</strong></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading latest blocks:', error);
+                const tbody = document.getElementById('latestBlocksTable');
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--danger);">Failed to load blocks</td></tr>';
+            }
+        }
+
+        async function loadLatestTransactions() {
+            try {
+                const response = await fetch(`${API_BASE}/chain?limit=5`);
+                if (!response.ok) throw new Error('Failed to fetch transactions');
+                
+                const data = await response.json();
+                const tbody = document.getElementById('latestTransactionsTable');
+                tbody.innerHTML = '';
+
+                if (!data.blocks || data.blocks.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--gray);">No transactions found</td></tr>';
+                    return;
+                }
+
+                let transactionCount = 0;
+                data.blocks.forEach(block => {
+                    if (!block.transactions) return;
+                    
+                    block.transactions.forEach(tx => {
+                        if (transactionCount >= 10) return;
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>
+                                <a href="#" onclick="viewTransaction('${tx.hash}'); return false;" class="hash">
+                                    ${tx.hash.substring(0, 16)}...
+                                </a>
+                            </td>
+                            <td>
+                                <a href="#" onclick="viewBlock(${block.index}); return false;">
+                                    ${block.index}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="#" onclick="viewAddress('${tx.from}'); return false;" class="address">
+                                    ${tx.from.substring(0, 10)}...
+                                </a>
+                            </td>
+                            <td>
+                                <a href="#" onclick="viewAddress('${tx.to}'); return false;" class="address">
+                                    ${tx.to.substring(0, 10)}...
+                                </a>
+                            </td>
+                            <td><strong>${parseInt(tx.amount) / 1e18} TESAM</strong></td>
+                            <td class="mobile-hidden">${((tx.gas || 0) * (tx.gasPrice || 0)) / 1e9} Gwei</td>
+                        `;
+                        tbody.appendChild(row);
+                        transactionCount++;
+                    });
+                });
+
+                if (transactionCount === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--gray);">No transactions found</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading latest transactions:', error);
+                const tbody = document.getElementById('latestTransactionsTable');
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--danger);">Failed to load transactions</td></tr>';
+            }
+        }
+
+        async function loadAllBlocks(page = 1, limit = 20) {
+            try {
+                const response = await fetch(`${API_BASE}/chain?page=${page}&limit=${limit}`);
+                if (!response.ok) throw new Error('Failed to fetch blocks');
+                
+                const data = await response.json();
+                const tbody = document.getElementById('allBlocksTable');
+                tbody.innerHTML = '';
+
+                if (!data.blocks || data.blocks.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--gray);">No blocks found</td></tr>';
+                    return;
+                }
+
+                data.blocks.forEach(block => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <a href="#" onclick="viewBlock(${block.index}); return false;" class="hash">
+                                ${block.index}
+                            </a>
+                        </td>
+                        <td>${formatTime(block.timestamp)}</td>
+                        <td><strong>${block.transactions ? block.transactions.length : 0}</strong></td>
+                        <td class="mobile-hidden">
+                            <a href="#" onclick="viewAddress('${block.miner}'); return false;" class="address">
+                                ${(block.miner || '').substring(0, 10)}...
+                            </a>
+                        </td>
+                        <td class="mobile-hidden">${(block.gasUsed || 0).toLocaleString()}</td>
+                        <td class="mobile-hidden">${(block.gasLimit || 0).toLocaleString()}</td>
+                        <td>${block.difficulty || 0}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Update pagination
+                updatePagination('blocksPagination', page, data.totalPages || 1, loadAllBlocks);
+            } catch (error) {
+                console.error('Error loading blocks:', error);
+                const tbody = document.getElementById('allBlocksTable');
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--danger);">Failed to load blocks</td></tr>';
+            }
+        }
+
+        async function loadAllTransactions(page = 1, limit = 20) {
+            try {
+                const response = await fetch(`${API_BASE}/chain?limit=100`);
+                if (!response.ok) throw new Error('Failed to fetch transactions');
+                
+                const data = await response.json();
+                const tbody = document.getElementById('allTransactionsTable');
+                tbody.innerHTML = '';
+
+                if (!data.blocks || data.blocks.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--gray);">No transactions found</td></tr>';
+                    return;
+                }
+
+                let allTransactions = [];
+                data.blocks.forEach(block => {
+                    if (block.transactions) {
+                        block.transactions.forEach(tx => {
+                            allTransactions.push({...tx, blockNumber: block.index});
+                        });
+                    }
+                });
+
+                // Sort by block number (newest first) and paginate
+                allTransactions.sort((a, b) => b.blockNumber - a.blockNumber);
+                const startIndex = (page - 1) * limit;
+                const paginatedTransactions = allTransactions.slice(startIndex, startIndex + limit);
+
+                if (paginatedTransactions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--gray);">No transactions found</td></tr>';
+                    return;
+                }
+
+                paginatedTransactions.forEach(tx => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <a href="#" onclick="viewTransaction('${tx.hash}'); return false;" class="hash">
+                                ${tx.hash.substring(0, 16)}...
+                            </a>
+                        </td>
+                        <td>
+                            <a href="#" onclick="viewBlock(${tx.blockNumber}); return false;">
+                                ${tx.blockNumber}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="#" onclick="viewAddress('${tx.from}'); return false;" class="address">
+                                ${tx.from.substring(0, 10)}...
+                            </a>
+                        </td>
+                        <td>
+                            <a href="#" onclick="viewAddress('${tx.to}'); return false;" class="address">
+                                ${tx.to.substring(0, 10)}...
+                            </a>
+                        </td>
+                        <td><strong>${parseInt(tx.amount) / 1e18} TESAM</strong></td>
+                        <td class="mobile-hidden">${((tx.gas || 0) * (tx.gasPrice || 0)) / 1e9} Gwei</td>
+                        <td><span class="badge badge-success">Success</span></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Update pagination
+                const totalPages = Math.ceil(allTransactions.length / limit);
+                updatePagination('transactionsPagination', page, totalPages, loadAllTransactions);
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                const tbody = document.getElementById('allTransactionsTable');
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--danger);">Failed to load transactions</td></tr>';
+            }
+        }
+
+        async function loadTokens() {
+            try {
+                const response = await fetch(`${API_BASE}/tokens`);
+                if (!response.ok) throw new Error('Failed to fetch tokens');
+                
+                const data = await response.json();
+                const container = document.getElementById('tokensGrid');
+                container.innerHTML = '';
+
+                // Handle different response formats
+                let tokens = [];
+                if (data.tokens && typeof data.tokens === 'object') {
+                    // Convert object to array
+                    tokens = Object.values(data.tokens);
+                } else if (Array.isArray(data)) {
+                    tokens = data;
+                } else if (data.success && Array.isArray(data.data)) {
+                    tokens = data.data;
+                } else if (data.success && data.tokens && typeof data.tokens === 'object') {
+                    tokens = Object.values(data.tokens);
+                }
+
+                if (tokens.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--gray);">No tokens found on the blockchain</div>';
+                    return;
+                }
+
+                tokens.forEach(token => {
+                    const card = document.createElement('div');
+                    card.className = 'token-card';
+                    card.innerHTML = `
+                        <div class="token-header">
+                            <div class="token-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <div class="token-info">
+                                <h3 class="token-name">${token.name || 'Unknown Token'}</h3>
+                                <div class="token-symbol">${token.symbol || 'N/A'}</div>
+                            </div>
+                        </div>
+                        <div class="token-details">
+                            <div class="token-detail">
+                                <span>Contract:</span>
+                                <span class="address">${(token.address || 'N/A').substring(0, 12)}...</span>
+                            </div>
+                            <div class="token-detail">
+                                <span>Total Supply:</span>
+                                <span>${(parseInt(token.totalSupply || 0) / 1e18).toLocaleString()}</span>
+                            </div>
+                            <div class="token-detail">
+                                <span>Holders:</span>
+                                <span>${token.holders || token.totalHolders || token.holderCount || 0}</span>
+                            </div>
+                            <div class="token-detail">
+                                <span>Decimals:</span>
+                                <span>${token.decimals || 18}</span>
+                            </div>
+                        </div>
+                        <div class="token-actions">
+                            <button class="btn btn-secondary" onclick="viewToken('${token.address}')">
+                                <i class="fas fa-info-circle"></i> View Details
+                            </button>
+                            <button class="btn btn-primary" onclick="copyToClipboard('${token.address}')">
+                                <i class="fas fa-copy"></i> Copy Address
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error loading tokens:', error);
+                const container = document.getElementById('tokensGrid');
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--danger);">Failed to load tokens from blockchain</div>';
+            }
+        }
+
+        // Detail Views
+        async function viewBlock(blockNumber) {
+            try {
+                const response = await fetch(`${API_BASE}/block/${blockNumber}`);
+                if (!response.ok) throw new Error('Block not found');
+                
+                const block = await response.json();
+                
+                // Hide all tabs and show block detail
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.getElementById('blockDetail').classList.add('active');
+                
+                // Update content
+                const content = document.getElementById('blockDetailContent');
+                content.innerHTML = `
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Block Height</div>
+                            <div class="detail-value">${block.index}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Timestamp</div>
+                            <div class="detail-value">${new Date(block.timestamp).toLocaleString()}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Transactions</div>
+                            <div class="detail-value">${block.transactions ? block.transactions.length : 0}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Miner</div>
+                            <div class="detail-value">
+                                <span class="address">${block.miner}</span>
+                                <button class="btn-copy" onclick="copyToClipboard('${block.miner}')" title="Copy address">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Difficulty</div>
+                            <div class="detail-value">${block.difficulty || 0}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gas Used</div>
+                            <div class="detail-value">${(block.gasUsed || 0).toLocaleString()}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gas Limit</div>
+                            <div class="detail-value">${(block.gasLimit || 0).toLocaleString()}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Block Reward</div>
+                            <div class="detail-value">${parseInt(block.blockReward || 0) / 1e18} TESAM</div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item full-width">
+                        <div class="detail-label">Block Hash</div>
+                        <div class="detail-value">
+                            <span class="hash">${block.hash}</span>
+                            <button class="btn-copy" onclick="copyToClipboard('${block.hash}')" title="Copy hash">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item full-width">
+                        <div class="detail-label">Parent Hash</div>
+                        <div class="detail-value">
+                            <span class="hash">${block.previousHash}</span>
+                            <button class="btn-copy" onclick="copyToClipboard('${block.previousHash}')" title="Copy hash">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    ${block.transactions && block.transactions.length > 0 ? `
+                    <div class="transactions-section">
+                        <h3><i class="fas fa-exchange-alt"></i> Transactions (${block.transactions.length})</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Transaction Hash</th>
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th>Value</th>
+                                        <th>Fee</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${block.transactions.map(tx => `
+                                        <tr>
+                                            <td>
+                                                <a href="#" onclick="viewTransaction('${tx.hash}'); return false;" class="hash">${tx.hash.substring(0, 20)}...</a>
+                                            </td>
+                                            <td>
+                                                <a href="#" onclick="viewAddress('${tx.from}'); return false;" class="address">${tx.from.substring(0, 10)}...</a>
+                                            </td>
+                                            <td>
+                                                <a href="#" onclick="viewAddress('${tx.to}'); return false;" class="address">${tx.to.substring(0, 10)}...</a>
+                                            </td>
+                                            <td><strong>${parseInt(tx.amount) / 1e18} TESAM</strong></td>
+                                            <td>${((tx.gas || 0) * (tx.gasPrice || 0)) / 1e9} Gwei</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : '<div style="text-align: center; padding: 40px; color: var(--gray);">No transactions in this block</div>'}
+                `;
+                
+                // Update URL and history
+                navigateToView('block', blockNumber);
+                
+            } catch (error) {
+                console.error('Error loading block:', error);
+                showNotification('Failed to load block details', 'error');
+                showTab('blocks');
+            }
+        }
+
+        async function viewTransaction(txHash) {
+            try {
+                const response = await fetch(`${API_BASE}/transaction/${txHash}`);
+                if (!response.ok) throw new Error('Transaction not found');
+                
+                const tx = await response.json();
+                
+                // Hide all tabs and show transaction detail
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.getElementById('transactionDetail').classList.add('active');
+                
+                // Update content
+                const content = document.getElementById('transactionDetailContent');
+                content.innerHTML = `
+                    <div class="detail-grid">
+                        <div class="detail-item full-width">
+                            <div class="detail-label">Transaction Hash</div>
+                            <div class="detail-value">
+                                <span class="hash">${tx.hash}</span>
+                                <button class="btn-copy" onclick="copyToClipboard('${tx.hash}')" title="Copy hash">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value">
+                                <span class="badge badge-success">Success</span>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Block</div>
+                            <div class="detail-value">
+                                <a href="#" onclick="viewBlock(${tx.blockNumber}); return false;">
+                                    #${tx.blockNumber}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Timestamp</div>
+                            <div class="detail-value">${new Date(tx.timestamp).toLocaleString()}</div>
+                        </div>
+                        <div class="detail-item full-width">
+                            <div class="detail-label">From</div>
+                            <div class="detail-value">
+                                <span class="address">${tx.from}</span>
+                                <button class="btn-copy" onclick="copyToClipboard('${tx.from}')" title="Copy address">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="detail-item full-width">
+                            <div class="detail-label">To</div>
+                            <div class="detail-value">
+                                <span class="address">${tx.to}</span>
+                                <button class="btn-copy" onclick="copyToClipboard('${tx.to}')" title="Copy address">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Value</div>
+                            <div class="detail-value"><strong>${parseInt(tx.amount) / 1e18} TESAM</strong></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Transaction Fee</div>
+                            <div class="detail-value">${((tx.gas || 0) * (tx.gasPrice || 0)) / 1e9} Gwei</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gas Price</div>
+                            <div class="detail-value">${tx.gasPrice || 0} Gwei</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Gas Limit</div>
+                            <div class="detail-value">${tx.gas || 0}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Nonce</div>
+                            <div class="detail-value">${tx.nonce || 0}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Update URL and history
+                navigateToView('tx', txHash);
+                
+            } catch (error) {
+                console.error('Error loading transaction:', error);
+                showNotification('Failed to load transaction details', 'error');
+                showTab('transactions');
+            }
+        }
+
+        async function viewAddress(address) {
+            try {
+                const response = await fetch(`${API_BASE}/address/${address}`);
+                if (!response.ok) throw new Error('Address not found');
+                
+                const data = await response.json();
+                
+                // Hide all tabs and show address detail
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.getElementById('addressDetail').classList.add('active');
+                
+                // Calculate balance properly - handle different response formats
+                let balance = 0;
+                if (data.balance && data.balance.wei) {
+                    balance = parseInt(data.balance.wei) / 1e18;
+                } else if (data.balance) {
+                    balance = parseInt(data.balance) / 1e18;
+                } else {
+                    balance = 0;
+                }
+                
+                // Update content
+                const content = document.getElementById('addressDetailContent');
+                content.innerHTML = `
+                    <div class="detail-grid">
+                        <div class="detail-item full-width">
+                            <div class="detail-label">Address</div>
+                            <div class="detail-value">
+                                <span class="address">${data.address}</span>
+                                <button class="btn-copy" onclick="copyToClipboard('${data.address}')" title="Copy address">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Balance</div>
+                            <div class="detail-value"><strong>${balance} TESAM</strong></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Transactions</div>
+                            <div class="detail-value">${data.transactionCount || 0}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Nonce</div>
+                            <div class="detail-value">${data.nonce || 0}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Type</div>
+                            <div class="detail-value">
+                                ${data.isContract ? 
+                                    '<span class="badge badge-info"><i class="fas fa-file-contract"></i> Contract</span>' : 
+                                    '<span class="badge badge-success"><i class="fas fa-wallet"></i> Wallet</span>'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${data.latestTransactions && data.latestTransactions.length > 0 ? `
+                    <div class="transactions-section">
+                        <h3><i class="fas fa-history"></i> Latest Transactions</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Transaction Hash</th>
+                                        <th>Block</th>
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th>Value</th>
+                                        <th class="mobile-hidden">Fee</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.latestTransactions.map(tx => `
+                                        <tr>
+                                            <td>
+                                                <a href="#" onclick="viewTransaction('${tx.hash}'); return false;" class="hash">${tx.hash.substring(0, 16)}...</a>
+                                            </td>
+                                            <td>
+                                                <a href="#" onclick="viewBlock(${tx.blockNumber}); return false;">${tx.blockNumber}</a>
+                                            </td>
+                                            <td>
+                                                <a href="#" onclick="viewAddress('${tx.from}'); return false;" class="address">${tx.from.substring(0, 10)}...</a>
+                                            </td>
+                                            <td>
+                                                <a href="#" onclick="viewAddress('${tx.to}'); return false;" class="address">${tx.to.substring(0, 10)}...</a>
+                                            </td>
+                                            <td><strong>${parseInt(tx.amount) / 1e18} TESAM</strong></td>
+                                            <td class="mobile-hidden">${((tx.gas || 0) * (tx.gasPrice || 0)) / 1e9} Gwei</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : '<div style="text-align: center; padding: 40px; color: var(--gray);">No transactions found for this address</div>'}
+                `;
+                
+                // Update URL and history
+                navigateToView('address', address);
+                
+            } catch (error) {
+                console.error('Error loading address:', error);
+                showNotification('Failed to load address details', 'error');
+                showTab('home');
+            }
+        }
+
+        async function viewToken(tokenAddress) {
+            try {
+                const response = await fetch(`${API_BASE}/token/${tokenAddress}`);
+                if (!response.ok) throw new Error('Token not found');
+                
+                const token = await response.json();
+                
+                // Hide all tabs and show token detail
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.getElementById('tokenDetail').classList.add('active');
+                
+                // Update content
+                const content = document.getElementById('tokenDetailContent');
+                content.innerHTML = `
+                    <div class="detail-grid">
+                        <div class="detail-item full-width">
+                            <div class="detail-label">Token Address</div>
+                            <div class="detail-value">
+                                <span class="address">${token.address}</span>
+                                <button class="btn-copy" onclick="copyToClipboard('${token.address}')" title="Copy address">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Name</div>
+                            <div class="detail-value">${token.name}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Symbol</div>
+                            <div class="detail-value">${token.symbol}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Total Supply</div>
+                            <div class="detail-value">${(parseInt(token.totalSupply) / 1e18).toLocaleString()}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Decimals</div>
+                            <div class="detail-value">${token.decimals}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Holders</div>
+                            <div class="detail-value">${token.totalHolders || token.holders?.length || 0}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Price</div>
+                            <div class="detail-value">$${token.price || '0.00'}</div>
+                        </div>
+                    </div>
+                    
+                    ${token.holders && token.holders.length > 0 ? `
+                    <div class="holders-section">
+                        <h3><i class="fas fa-users"></i> Top Holders</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Address</th>
+                                        <th>Balance</th>
+                                        <th class="mobile-hidden">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${token.holders.slice(0, 10).map((holder, index) => `
+                                        <tr>
+                                            <td>${index + 1}</td>
+                                            <td>
+                                                <a href="#" onclick="viewAddress('${holder.address}'); return false;" class="address">${holder.address.substring(0, 10)}...</a>
+                                            </td>
+                                            <td>${parseFloat(holder.balance).toLocaleString()} ${token.symbol}</td>
+                                            <td class="mobile-hidden">${holder.percentage ? holder.percentage.toFixed(2) : '0.00'}%</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : '<div style="text-align: center; padding: 40px; color: var(--gray);">No holder data available</div>'}
+                `;
+                
+                // Update URL and history
+                navigateToView('token', tokenAddress);
+                
+            } catch (error) {
+                console.error('Error loading token:', error);
+                showNotification('Failed to load token details', 'error');
+                showTab('tokens');
+            }
+        }
+
+        // Utility Functions
+        function formatTime(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
+            return `${Math.floor(diff / 86400000)} days ago`;
+        }
+
+        function updatePagination(containerId, currentPage, totalPages, loadFunction) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let paginationHTML = '';
+            
+            if (currentPage > 1) {
+                paginationHTML += `<button class="btn btn-secondary" onclick="${loadFunction.name}(${currentPage - 1})"><i class="fas fa-chevron-left"></i> Previous</button>`;
+            }
+            
+            paginationHTML += `<span class="pagination-info">Page ${currentPage} of ${totalPages}</span>`;
+            
+            if (currentPage < totalPages) {
+                paginationHTML += `<button class="btn btn-secondary" onclick="${loadFunction.name}(${currentPage + 1})">Next <i class="fas fa-chevron-right"></i></button>`;
+            }
+            
+            container.innerHTML = paginationHTML;
+        }
+
+        // Initialize
+        function init() {
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            currentTheme = savedTheme;
+            document.body.setAttribute('data-theme', currentTheme);
+            const themeIcon = document.querySelector('.theme-toggle i');
+            themeIcon.className = currentTheme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+
+            // Handle initial hash
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                navigateToHash(hash);
+            } else {
+                showTab('home');
+            }
+
+            // Add to initial history
+            viewHistory.push({ type: 'home', identifier: null });
+
+            // Set up event listeners
+            window.addEventListener('popstate', handlePopState);
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.search-box')) {
+                    document.getElementById('searchResults').classList.remove('show');
+                }
+            });
+
+            // Handle Enter key in search
+            document.getElementById('globalSearch').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            // Load price data and set up interval
+            fetchPriceData();
+            priceUpdateInterval = setInterval(fetchPriceData, 60000); // Update every minute
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (priceUpdateInterval) {
+                clearInterval(priceUpdateInterval);
+            }
+        });
+    </script>
+</body>
+</html>
